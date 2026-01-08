@@ -1,0 +1,18 @@
+-- ============================================================================
+-- MIGRAÇÃO: NÃO É MAIS NECESSÁRIA!
+-- ============================================================================
+-- 
+-- "Cliente Morto" agora é um STATUS (como "Em atraso", "Pago", etc.)
+-- NÃO é mais um campo booleano separado.
+-- 
+-- A automação automaticamente muda o STATUS do contrato para "Cliente Morto"
+-- quando ele tem 63+ dias de atraso SEM multa.
+-- 
+-- SE você já criou as colunas antigas, pode removê-las (opcional):
+-- ALTER TABLE contratos DROP COLUMN IF EXISTS morto;
+-- ALTER TABLE contratos DROP COLUMN IF EXISTS proxima_verificacao_morto;
+-- ALTER TABLE contratos DROP COLUMN IF EXISTS proxima_verificacao_cancelado;
+-- 
+-- ============================================================================
+-- NENHUM SQL NECESSÁRIO PARA A NOVA VERSÃO
+-- ============================================================================

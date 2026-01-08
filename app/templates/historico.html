@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico | Bree{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('painel_cobranca') }}#linha-{{ contrato.id }}" class="btn btn-outline"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+        <i data-lucide="arrow-left"></i> Voltar ao Painel
+    </a>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 0.25rem;">
+                Histórico de Ações
+            </h1>
+            <p style="color: var(--text-muted); font-size: 1.1rem;">Contrato <strong>{{ contrato.contrato }}</strong>
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <!-- Botão Toggle SMS -->
+            {% if contrato.envio_sms %}
+            <a href="/toggle_sms/{{ contrato.id }}" class="btn btn-outline"
+                style="border-color: var(--danger); color: var(--danger);">
+                <i data-lucide="bell-off"></i> Desativar SMS
+            </a>
+            {% else %}
+            <a href="/toggle_sms/{{ contrato.id }}" class="btn btn-outline"
+                style="border-color: var(--secondary); color: var(--secondary);">
+                <i data-lucide="bell"></i> Ativar SMS
+            </a>
+            {% endif %}
+
+            <!-- Botão Toggle Critico -->
+            {% if contrato.cliente_critico %}
+            <a href="/toggle_critico/{{ contrato.id }}" class="btn btn-outline"
+                style="border-color: var(--warning); color: var(--warning);">
+                <i data-lucide="star-off"></i> Remover Crítico
+            </a>
+            {% else %}
+            <a href="/toggle_critico/{{ contrato.id }}" class="btn btn-outline"
+                style="border-color: #fd7e14; color: #fd7e14;">
+                <i data-lucide="star"></i> Marcar Crítico
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Alertas de Status -->
+{% if not contrato.envio_sms %}
+<div class="card"
+    style="padding: 1rem; border-left: 5px solid var(--danger); background: var(--danger-light); color: var(--danger-dark); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+    <i data-lucide="bell-off"></i>
+    <strong>Este cliente não deve receber SMS de cobrança.</strong>
+</div>
+{% endif %}
+
+{% if contrato.cliente_critico %}
+<div class="card"
+    style="padding: 1rem; border-left: 5px solid var(--warning); background: var(--warning-light); color: #856404; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
+    <i data-lucide="alert-triangle"></i>
+    <strong>Este cliente está marcado como CRÍTICO. Redobre a atenção ao interagir.</strong>
+</div>
+{% endif %}
+
+<div class="card" style="padding: 0; overflow: hidden;">
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: var(--primary-light); color: var(--primary-dark); text-align: left;">
+                    <th style="padding: 1rem; font-weight: 700;">Data</th>
+                    <th style="padding: 1rem; font-weight: 700;">Tipo</th>
+                    <th style="padding: 1rem; font-weight: 700;">Mensagem</th>
+                    <th style="padding: 1rem; font-weight: 700;">Responsável</th>
+                    <th style="padding: 1rem; font-weight: 700;">Detalhes</th>
+                    <th style="padding: 1rem; font-weight: 700;">Status Envio</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for acao in acoes %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 1rem; white-space: nowrap;">
+                        {{ acao.enviada_em.strftime('%d/%m/%Y %H:%M') }}
+                    </td>
+                    <td style="padding: 1rem;">
+                        <span
+                            style="font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 4px 8px; border-radius: 6px; font-size: 0.85rem;">
+                            {{ acao.tipo }}
+                        </span>
+                    </td>
+                    <td style="padding: 1rem; max-width: 400px;">
+                        <div style="white-space: pre-wrap;">{{ acao.mensagem }}</div>
+                    </td>
+                    <td style="padding: 1rem; font-weight: 500;">
+                        {{ acao.usuario or '-' }}
+                    </td>
+                    <td style="padding: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Parc. {{ acao.parcela }} ({{ acao.dia_atraso }} dias atraso)
+                    </td>
+                    <td style="padding: 1rem;">
+                        {{ acao.status_envio }}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not acoes %}
+                <tr>
+                    <td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                        Nenhuma ação registrada para este contrato.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Contrato | Bree{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">Editar Contrato</h1>
+            <p style="color: var(--text-muted);">{{ contrato.contrato }} - {{ contrato.razao_social }}</p>
+        </div>
+        <a href="{{ url_for('painel_cobranca') }}#linha-{{ contrato.id }}" class="btn btn-outline">
+            <i data-lucide="arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="POST">
+            <h2 style="font-size: 1.2rem; margin-bottom: 1.5rem; font-weight: 700;">Dados de Contato</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Celular</label>
+                    <input type="text" name="celular" value="{{ contrato.celular or '' }}" class="input-premium"
+                        style="padding: 10px;" pattern="\d*" inputmode="numeric" title="Somente números">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">E-mail</label>
+                    <input type="email" name="email" value="{{ contrato.email or '' }}" class="input-premium"
+                        style="padding: 10px;">
+                </div>
+            </div>
+
+            {% if session.get('usuario_tipo') == 'admin' %}
+            <h2
+                style="font-size: 1.2rem; margin-bottom: 1.5rem; font-weight: 700; border-top: 1px solid #eee; padding-top: 1.5rem;">
+                Dados do Contrato (Admin)</h2>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Razão Social</label>
+                <input type="text" name="razao_social" value="{{ contrato.razao_social or '' }}" class="input-premium"
+                    style="padding: 10px;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Nome do Plano</label>
+                <input type="text" name="nome_plano" value="{{ contrato.nome_plano or '' }}" class="input-premium"
+                    style="padding: 10px;">
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Vidas</label>
+                    <input type="number" name="vidas" value="{{ contrato.vidas or 0 }}" class="input-premium"
+                        style="padding: 10px;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Valor da Parcela</label>
+                    <input type="number" step="0.01" name="valor_parcela" value="{{ contrato.valor_parcela or 0 }}"
+                        class="input-premium" style="padding: 10px;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Parcela Atual</label>
+                    <input type="number" name="parcela_atual" value="{{ contrato.parcela_atual or 1 }}" min="1"
+                        class="input-premium" style="padding: 10px;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Status</label>
+                    <select name="status" class="input-premium" style="padding: 10px;">
+                        <option value="Em dia" {% if contrato.status=='Em dia' %}selected{% endif %}>Em dia</option>
+                        <option value="Pago" {% if contrato.status=='Pago' %}selected{% endif %}>Pago</option>
+                        <option value="Em atraso" {% if contrato.status=='Em atraso' %}selected{% endif %}>Em atraso
+                        </option>
+                        <option value="Cancelado por Inadimplência" {% if contrato.status=='Cancelado por Inadimplência'
+                            %}selected{% endif %}>Cancelado Inad.</option>
+                        <option value="Cancelado por Regra" {% if contrato.status=='Cancelado por Regra' %}selected{%
+                            endif %}>Cancelado Regra</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Vendedor</label>
+                    <select name="vendedor_id" class="input-premium" style="padding: 10px;">
+                        <option value="">Selecione</option>
+                        {% for vendedor in vendedores %}
+                        <option value="{{ vendedor.id }}" {% if contrato.vendedor_id==vendedor.id %}selected{% endif %}>
+                            {{ vendedor.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    <i data-lucide="save"></i> Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

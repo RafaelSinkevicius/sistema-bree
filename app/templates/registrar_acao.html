@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar Ação | Bree{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 1.5rem;">
+        <a href="{{ url_for('painel_cobranca') }}" class="btn btn-outline"
+            style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;">
+            <i data-lucide="arrow-left"></i> Voltar ao Painel
+        </a>
+    </div>
+
+    <h1 style="font-size: 1.8rem; margin-bottom: 2rem; font-weight: 800; color: var(--primary);">Registrar Ação de
+        Cobrança</h1>
+
+    <div class="card">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
+            Dados do Contrato
+        </h2>
+
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1rem;">
+            <div>
+                <label
+                    style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Contrato
+                    & Proposta</label>
+                <div style="font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    {{ contrato.contrato }}
+                    <button onclick="copiarTexto('{{ contrato.contrato }}')"
+                        style="background: none; border: none; cursor: pointer; color: var(--primary);">
+                        <i data-lucide="copy" size="14"></i>
+                    </button>
+                </div>
+                <div style="font-size: 0.9rem;">{{ contrato.proposta }}</div>
+            </div>
+
+            <div>
+                <label
+                    style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Cliente</label>
+                <div style="font-weight: 700; font-size: 1.1rem;">{{ contrato.razao_social }}</div>
+                <div style="font-size: 0.9rem;">{{ contrato.cidade }}</div>
+            </div>
+
+            <div>
+                <label
+                    style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Contato</label>
+                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                    {% if contrato.celular %}
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="phone" size="14"></i> {{ contrato.celular }}
+                        <button onclick="copiarTexto('{{ contrato.celular }}')"
+                            style="background: none; border: none; cursor: pointer; color: var(--primary);">
+                            <i data-lucide="copy" size="14"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                    {% if contrato.email %}
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="mail" size="14"></i> {{ contrato.email }}
+                        <button onclick="copiarTexto('{{ contrato.email }}')"
+                            style="background: none; border: none; cursor: pointer; color: var(--primary);">
+                            <i data-lucide="copy" size="14"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label
+                    style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Financeiro</label>
+                <div style="font-weight: 700; color: var(--danger);">
+                    {{ contrato.dias_atraso }} dias de atraso
+                </div>
+                <div style="font-size: 0.9rem;">Parcela {{ contrato.parcela_atual }} - R$ {{ contrato.valor_parcela }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="card">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1.5rem;">Nova Ação</h2>
+
+        <div style="margin-bottom: 2rem;">
+            <label style="display: block; font-weight: 600; margin-bottom: 1rem;">Tipo de Ação</label>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <label
+                    style="display: flex; align-items: center; gap: 0.5rem; background: #f8f9fa; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; border: 1px solid #ddd;">
+                    <input type="radio" name="tipo" value="WhatsApp" required unchecked>
+                    <i data-lucide="message-circle" style="color: #25D366;"></i> WhatsApp
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 0.5rem; background: #f8f9fa; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; border: 1px solid #ddd;">
+                    <input type="radio" name="tipo" value="E-mail" required>
+                    <i data-lucide="mail" style="color: #007bff;"></i> E-mail
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 0.5rem; background: #f8f9fa; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; border: 1px solid #ddd;">
+                    <input type="radio" name="tipo" value="Ligação" required>
+                    <i data-lucide="phone" style="color: #666;"></i> Ligação
+                </label>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label for="mensagem" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Mensagem /
+                Observação</label>
+            <textarea name="mensagem" id="mensagem" rows="6" class="input-premium"
+                placeholder="Descreva o que foi tratado ou cole a mensagem enviada..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i data-lucide="save"></i> Registrar Ação
+        </button>
+    </form>
+</div>
+
+<script>
+    function copiarTexto(texto) {
+        navigator.clipboard.writeText(texto).then(() => {
+            // Feedback visual poderia ser um toast, mas um alert simples resolve ou muda o icone
+            alert("Copiado!");
+        });
+    }
+</script>
+{% endblock %}

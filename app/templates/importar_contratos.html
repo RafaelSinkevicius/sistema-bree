@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Importar Contratos | Bree{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">Importar Contratos</h1>
+            <p style="color: var(--text-muted);">Importação em massa via planilha Excel.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+            <i data-lucide="arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <h2
+            style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="info" style="color: var(--secondary);"></i> Instruções
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">Envie uma planilha Excel (<b>.xls</b> ou <b>.xlsx</b>)
+            contendo as seguintes colunas:</p>
+
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border: 1px solid #eee;">
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                <span>• VENDEDOR</span>
+                <span>• PROPOSTA</span>
+                <span>• CONTRATO</span>
+                <span>• STATUS</span>
+                <span>• DATA DE CHECAGEM</span>
+                <span>• RAZÃO SOCIAL/NOME</span>
+                <span>• CNPJ/CPF</span>
+                <span>• CELULAR</span>
+                <span>• E-MAIL</span>
+                <span>• CIDADE</span>
+                <span>• NOME DO PLANO</span>
+                <span>• DATA DE VIGÊNCIA</span>
+                <span>• VIDAS</span>
+                <span>• VALOR DA PARCELA</span>
+                <span>• PARCELA ATUAL</span>
+                <span>• VERIFICADO?</span>
+            </div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem;">
+            * Certifique-se de que os nomes das colunas estejam exatos.
+        </p>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1.5rem;">Upload do Arquivo</h2>
+        <form method="post" enctype="multipart/form-data">
+            <div style="margin-bottom: 2rem;">
+                <label for="arquivo" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Selecione o
+                    arquivo</label>
+                <input type="file" id="arquivo" name="arquivo" accept=".xls,.xlsx" class="input-premium"
+                    style="padding: 10px;" required>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    <i data-lucide="upload-cloud"></i> Iniciar Importação
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

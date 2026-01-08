@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Database
+instance/
+*.db
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (Optional - preserving structure but ignoring large/sensitive data if needed)
+# data/*.xlsx
+# data/*.csv
+
+# Build Artifacts
+dist/
+build/
+*.spec
+*.exe
+__pycache__/
+*.pyc

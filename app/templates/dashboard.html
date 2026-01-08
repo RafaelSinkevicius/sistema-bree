@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Bree{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">Visão Geral</h1>
+        <p style="color: var(--text-muted);">Acompanhamento em tempo real da carteira.</p>
+    </div>
+    <div style="text-align: right;">
+        <span
+            style="font-size: 0.9rem; background: white; padding: 0.5rem 1rem; border-radius: 20px; box-shadow: var(--shadow-sm); font-weight: 600;">
+            Total Contratos: {{ total }}
+        </span>
+    </div>
+</div>
+
+<!-- Grid System for Status Cards -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+
+    <!-- Ativos (Em dia + Pago) -->
+    <div class="card" style="border-left: 5px solid var(--secondary);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                    Ativos</div>
+                <div style="font-size: 2rem; font-weight: 800; color: var(--secondary);">{{ status_counts['Ativos'] }}
+                </div>
+            </div>
+            <div style="background: var(--secondary-light); padding: 8px; border-radius: 8px;">
+                <i data-lucide="check-circle" style="color: var(--secondary);"></i>
+            </div>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Contratos em dia ou pagos</div>
+    </div>
+
+    <!-- Em Atraso -->
+    <a href="{{ url_for('painel_cobranca', status='Em atraso') }}" class="card"
+        style="border-left: 5px solid var(--warning); text-decoration: none; display: block; transition: transform 0.2s;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                    Em Atraso</div>
+                <div style="font-size: 2rem; font-weight: 800; color: var(--warning);">{{ status_counts['Atrasados'] }}
+                </div>
+            </div>
+            <div style="background: var(--warning-light); padding: 8px; border-radius: 8px;">
+                <i data-lucide="clock" style="color: #856404;"></i>
+            </div>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Ação necessária</div>
+    </a>
+
+    <!-- Cancelados Inadimplência -->
+    <div class="card" style="border-left: 5px solid var(--danger);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                    Cancelados (Inad.)</div>
+                <!-- FIXED KEY HERE -->
+                <div style="font-size: 2rem; font-weight: 800; color: var(--danger);">{{
+                    status_counts['Cancelados_Inad'] }}</div>
+            </div>
+            <div style="background: var(--danger-light); padding: 8px; border-radius: 8px;">
+                <i data-lucide="x-circle" style="color: var(--danger);"></i>
+            </div>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Perdidos por falta de pagt</div>
+    </div>
+</div>
+
+<!-- Bottom Two Cards Centered -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 300px)); gap: 1.5rem; justify-content: center; margin-bottom: 3rem;">
+
+    <!-- Cancelados por Regra -->
+    <div class="card" style="border-left: 5px solid #6c757d;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                    Cancelados (Regra)</div>
+                <!-- FIXED KEY HERE -->
+                <div style="font-size: 2rem; font-weight: 800; color: #6c757d;">{{ status_counts['Cancelados_Regra'] }}
+                </div>
+            </div>
+            <div style="background: #e9ecef; padding: 8px; border-radius: 8px;">
+                <i data-lucide="file-x-2" style="color: #6c757d;"></i>
+            </div>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Cancelados por norma interna</div>
+    </div>
+
+    <!-- Mortos (63+ dias) -->
+    <a href="{{ url_for('painel_cobranca', status='Mortos') }}" class="card"
+        style="border-left: 5px solid #343a40; background: #fafafa; text-decoration: none; display: block;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                    Cliente Morto</div>
+                <div style="font-size: 2rem; font-weight: 800; color: #343a40;">{{ status_counts['Mortos'] }}</div>
+            </div>
+            <div style="background: #e9ecef; padding: 8px; border-radius: 8px;">
+                <i data-lucide="skull" style="color: #343a40;"></i>
+            </div>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">63+ dias de atraso</div>
+    </a>
+
+</div>
+
+<!-- Gráfico -->
+<div class="card" style="margin-bottom: 3rem;">
+    <h3 style="margin-bottom: 1.5rem; font-weight: 700;">Distribuição da Carteira</h3>
+    <div style="height: 300px; display: flex; justify-content: center;">
+        <canvas id="statusChart"></canvas>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="card">
+    <h2 style="margin-bottom: 1.5rem; font-weight: 700;">Ações Rápidas</h2>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+
+        <a href="{{ url_for('listar_contratos') }}" class="btn btn-primary">
+            <i data-lucide="search"></i> Buscar Contrato
+        </a>
+
+        {% if session.get("usuario_tipo") == "admin" %}
+
+        <a href="{{ url_for('importar_contratos_view') }}" class="btn btn-outline">
+            <i data-lucide="upload"></i> Importar Contratos
+        </a>
+
+        <form action="{{ url_for('marcar_contratos_mortos') }}" method="post"
+            onsubmit="return confirm('Tem certeza? Isso marcará contratos com 63+ dias de atraso como Mortos.')"
+            style="margin: 0;">
+            <button type="submit" class="btn btn-outline" style="border-color: #666; color: #666;">
+                <i data-lucide="broom"></i> Limpar Mortos
+            </button>
+        </form>
+
+        <a href="{{ url_for('sobrepor_status_view') }}" class="btn btn-outline"
+            style="color: var(--danger); border-color: var(--danger);">
+            <i data-lucide="refresh-cw"></i> Sobrepor Status
+        </a>
+
+        <a href="{{ url_for('exportar_base_completa') }}" class="btn btn-outline"
+            style="color: var(--secondary); border-color: var(--secondary);">
+            <i data-lucide="download"></i> Exportar Base
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('statusChart');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Ativos', 'Atrasados', 'Mortos', 'Cancelados Inad.', 'Cancelados Regra'],
+            datasets: [{
+                data: [
+                    {{ status_counts['Ativos'] }},
+            {{ status_counts['Atrasados'] }},
+                    {{ status_counts['Mortos'] }},
+        {{ status_counts['Cancelados_Inad'] }},
+        {{ status_counts['Cancelados_Regra'] }}
+                ],
+        backgroundColor: [
+        '#008f5d', // Secondary
+        '#bf8700', // Warning
+        '#636c76', // Muted
+        '#cf222e', // Danger
+        '#6e7781'  // Grey
+    ],
+        borderWidth: 0
+            }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right'
+            }
+        }
+    }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar Contrato | Bree{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; margin-top: 5vh;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">Editar Cadastro</h1>
+        <p style="color: var(--text-muted);">Busque o contrato que deseja modificar.</p>
+    </div>
+
+    <div class="card">
+        <form method="POST" action="/editar_contrato">
+            <div style="margin-bottom: 2rem;">
+                <label for="numero_contrato" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Número do
+                    Contrato</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" name="numero_contrato" class="input-premium" placeholder="Ex: 123456789" required
+                        style="flex: 1; padding: 12px;">
+                    <button type="submit" class="btn btn-primary" style="padding: 0 1.5rem;">
+                        <i data-lucide="search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div style="text-align: center;">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline" style="border: none;">
+                &larr; Voltar ao Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

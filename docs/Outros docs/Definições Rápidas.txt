@@ -1,0 +1,41 @@
+# para isolar em ambiente virtual python (no cmd da pasta do projeto)
+python -m venv venv
+venv\Scripts\activate
+
+# para sempre alinhar o utf8 (no sql)
+
+SET CLIENT_ENCODING TO 'LATIN1';
+
+
+# para instalar módulo pandas no ambiente digital (no cmd da pasta do projeto):
+
+pip install pandas openpyxl
+
+# para excluir/resetar base de contratos do banco de dados (no sql)
+
+DELETE FROM contratos;
+ALTER SEQUENCE contratos_id_seq RESTART WITH 1;
+
+# para excluir/resetar base de vendedoras do banco de dados (no sql)
+
+DELETE FROM vendedores;
+ALTER SEQUENCE vendedores_id_seq RESTART WITH 1;
+
+
+# para deletar todas as tabelas (no python): 
+
+from bree import app, db
+with app.app_context():
+    db.drop_all()
+    db.create_all()
+
+# para mudar o status de um contrato (no sql):
+
+UPDATE contratos
+SET 
+    status = 'Em atraso',
+    verificado = FALSE,
+    data_checagem = NULL
+WHERE id = 4727;
+
+

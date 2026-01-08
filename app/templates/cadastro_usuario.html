@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Usuário | Bree{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 0 auto; margin-top: 5vh;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">Novo Usuário</h1>
+        <p style="color: var(--text-muted);">Cadastro de acesso ao sistema.</p>
+    </div>
+
+    <div class="card">
+        <form method="POST">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Nome Completo</label>
+                <input type="text" name="nome" class="input-premium" required style="padding: 10px;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">E-mail</label>
+                <input type="email" name="email" class="input-premium" required style="padding: 10px;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Senha</label>
+                <input type="password" name="senha" class="input-premium" required style="padding: 10px;">
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Tipo de Acesso</label>
+                <select name="tipo" class="input-premium" required style="padding: 10px;">
+                    <option value="usuario">Usuário Comum</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <i data-lucide="user-plus"></i> Cadastrar Usuário
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline" style="border: none;">
+                Cancelar
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Cobrança | Bree{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">Relatório de Cobrança</h1>
+        <p style="color: var(--text-muted);">Métricas mensais de performance.</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="{{ url_for('exportar_relatorio', mes=mes, ano=ano, usuario=usuario_selecionado) }}"
+            class="btn btn-outline">
+            <i data-lucide="download"></i> Exportar
+        </a>
+        <a href="{{ url_for('exportar_relatorio_atendentes', mes=mes, ano=ano, usuario=usuario_selecionado) }}"
+            class="btn btn-outline">
+            <i data-lucide="users"></i> Por Atendente
+        </a>
+        <a href="{{ url_for('painel_cobranca') }}" class="btn btn-primary">
+            Ir para Cobrança
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card" style="margin-bottom: 2rem;">
+    <form method="get" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 100px;">
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Mês</label>
+            <select name="mes" class="input-premium" style="padding: 10px;">
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if m==mes %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="flex: 1; min-width: 100px;">
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Ano</label>
+            <select name="ano" class="input-premium" style="padding: 10px;">
+                {% for a in range(2024, 2031) %}
+                <option value="{{ a }}" {% if a==ano %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="flex: 2; min-width: 200px;">
+            <label
+                style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Atendente</label>
+            <select name="usuario" class="input-premium" style="padding: 10px;">
+                <option value="">Todos</option>
+                {% for nome in usuarios_filtro %}
+                <option value="{{ nome }}" {% if nome==usuario_selecionado %}selected{% endif %}>{{ nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button class="btn btn-primary" type="submit" style="padding: 10px 20px;">
+            <i data-lucide="filter"></i> Filtrar
+        </button>
+    </form>
+</div>
+
+<!-- Métricas Principais -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Total em
+            Atraso</div>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--warning);">{{ total }}</div>
+    </div>
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">
+            Recuperados</div>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--secondary);">{{ pagos }}</div>
+        <div style="font-size: 0.8rem; color: var(--secondary);">{{ taxa_recuperacao }}</div>
+    </div>
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">
+            Cancelados</div>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--danger);">{{ cancelados }}</div>
+        <div style="font-size: 0.8rem; color: var(--danger);">{{ taxa_cancelamento }}</div>
+    </div>
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Ações
+            Feitas</div>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--primary);">{{ acoes }}</div>
+    </div>
+</div>
+
+<!-- Tabela Performance -->
+<div class="card" style="padding: 0; overflow: hidden;">
+    <div style="padding: 1.5rem; border-bottom: 1px solid #eee;">
+        <h2 style="font-size: 1.2rem; font-weight: 700; margin: 0;">Performance por Atendente</h2>
+    </div>
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: var(--primary-light); color: var(--primary-dark); text-align: left;">
+                    <th style="padding: 1rem; font-weight: 700;">Atendente</th>
+                    <th style="padding: 1rem; font-weight: 700;">Carteira</th>
+                    <th style="padding: 1rem; font-weight: 700;">Ações</th>
+                    <th style="padding: 1rem; font-weight: 700;">Última Ação</th>
+                    <th style="padding: 1rem; font-weight: 700;">Pagos</th>
+                    <th style="padding: 1rem; font-weight: 700;">Em Atraso</th>
+                    <th style="padding: 1rem; font-weight: 700;">Cancelados</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for resumo in resumo_usuarios %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 1rem; font-weight: 600;">{{ resumo.usuario }}</td>
+                    <td style="padding: 1rem; text-align: center;">{{ resumo.assumidos }}</td>
+                    <td style="padding: 1rem; text-align: center;">
+                        <span style="background: #e9ecef; padding: 2px 8px; border-radius: 10px; font-weight: 600;">{{
+                            resumo.acoes }}</span>
+                    </td>
+                    <td style="padding: 1rem; color: var(--text-muted);">{{ resumo.ultima_acao or '-' }}</td>
+                    <td style="padding: 1rem; text-align: center; color: var(--secondary); font-weight: 600;">{{
+                        resumo.pagos }}</td>
+                    <td style="padding: 1rem; text-align: center; color: var(--warning); font-weight: 600;">{{
+                        resumo.em_atraso }}</td>
+                    <td style="padding: 1rem; text-align: center; color: var(--danger); font-weight: 600;">{{
+                        resumo.cancelados }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

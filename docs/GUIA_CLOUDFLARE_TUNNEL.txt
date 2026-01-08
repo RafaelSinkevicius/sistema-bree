@@ -1,0 +1,407 @@
+================================================================================
+  GUIA DE CONFIGURAÇÃO - CLOUDFLARE TUNNEL
+  Sistema Bree - Acesso Remoto via Internet
+================================================================================
+
+Este guia ensina como configurar o Cloudflare Tunnel para permitir acesso
+remoto ao Sistema Bree via internet, sem precisar de domínio próprio.
+
+================================================================================
+  ÍNDICE
+================================================================================
+
+1. INSTALAÇÃO DO CLOUDFLARED
+2. OPÇÃO 1: LINK TEMPORÁRIO (Rápido e Simples)
+3. OPÇÃO 2: TÚNEL PERMANENTE SEM DOMÍNIO (Recomendado)
+4. TROUBLESHOOTING (Solução de Problemas)
+5. SCRIPTS AUTOMÁTICOS
+
+================================================================================
+  1. INSTALAÇÃO DO CLOUDFLARED
+================================================================================
+
+PASSO 1: Baixar o Cloudflared
+-------------------------------
+1. Acesse: https://github.com/cloudflare/cloudflared/releases/latest
+2. Baixe: cloudflared-windows-amd64.exe
+3. Renomeie para: cloudflared.exe
+4. Mova para: C:\Windows\System32\cloudflared.exe
+   (Ou deixe na pasta do projeto)
+
+PASSO 2: Verificar Instalação
+------------------------------
+Abra o PowerShell ou CMD e execute:
+    cloudflared --version
+
+Se aparecer a versão, está instalado corretamente!
+
+PASSO 3: Fazer Login no Cloudflare
+-----------------------------------
+Execute no terminal:
+    cloudflared tunnel login
+
+Isso abrirá seu navegador para você fazer login na conta Cloudflare.
+(Se não tiver conta, crie uma gratuita em: https://dash.cloudflare.com/sign-up)
+
+================================================================================
+  2. OPÇÃO 1: LINK TEMPORÁRIO (Rápido e Simples)
+================================================================================
+
+DESCRIÇÃO:
+----------
+Gera um link público temporário que expira quando você fecha o terminal.
+O link muda a cada vez que você executa o comando.
+
+QUANDO USAR:
+-----------
+- Testes rápidos
+- Acesso esporádico
+- Não precisa de link fixo
+
+COMO USAR:
+----------
+
+PASSO 1: Iniciar o Sistema Bree
+--------------------------------
+1. Abra um terminal na pasta do projeto
+2. Execute: python bree.py
+3. Aguarde aparecer: "Running on http://127.0.0.1:5000"
+
+PASSO 2: Iniciar o Cloudflare Tunnel
+-------------------------------------
+1. Abra OUTRO terminal (deixe o Flask rodando)
+2. Execute:
+    cloudflared tunnel --url http://localhost:5000
+
+PASSO 3: Copiar o Link
+----------------------
+Você verá algo como:
+    +--------------------------------------------------------------------------------------------+
+    |  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable): |
+    |  https://xxxx-xxxx-xxxx.trycloudflare.com                                                 |
+    +--------------------------------------------------------------------------------------------+
+
+Copie esse link e compartilhe com seus usuários!
+
+IMPORTANTE:
+-----------
+- O link expira quando você fecha o terminal
+- O link muda a cada execução
+- Mantenha o terminal aberto enquanto precisar do acesso
+
+SCRIPT AUTOMÁTICO (iniciar-temporario.bat):
+--------------------------------------------
+Crie um arquivo "iniciar-temporario.bat" com este conteúdo:
+
+    @echo off
+    echo Iniciando Sistema Bree com Cloudflare Tunnel Temporario...
+    echo.
+    
+    REM Iniciar Flask em background
+    start "Bree Flask" cmd /k "cd /d %~dp0 && python bree.py"
+    
+    REM Aguardar Flask iniciar
+    echo Aguardando Flask iniciar (8 segundos)...
+    timeout /t 8
+    
+    REM Iniciar Cloudflare Tunnel
+    echo.
+    echo ========================================
+    echo   LINK PUBLICO TEMPORARIO:
+    echo ========================================
+    echo.
+    cloudflared tunnel --url http://localhost:5000
+    pause
+
+Depois é só dar duplo clique no arquivo!
+
+================================================================================
+  3. OPÇÃO 2: TÚNEL PERMANENTE SEM DOMÍNIO (Recomendado)
+================================================================================
+
+DESCRIÇÃO:
+----------
+Cria um túnel permanente com link fixo que não muda. Ideal para uso diário
+com múltiplos usuários.
+
+QUANDO USAR:
+-----------
+- Acesso diário de múltiplos usuários
+- Precisa de link fixo para compartilhar
+- Quer estabilidade e confiabilidade
+
+COMO CONFIGURAR:
+---------------
+
+PASSO 1: Criar o Túnel Permanente
+----------------------------------
+Execute no terminal:
+    cloudflared tunnel create bree-sistema
+
+Você verá algo como:
+    Created tunnel bree-sistema with id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+ANOTE O ID (UUID) que aparece!
+
+PASSO 2: Criar Arquivo de Configuração
+---------------------------------------
+1. Crie a pasta (se não existir):
+   C:\Users\Ativa-New\.cloudflared
+
+2. Crie o arquivo: C:\Users\Ativa-New\.cloudflared\config.yml
+
+3. Cole este conteúdo (SUBSTITUA [UUID_DO_TUNNEL] pelo ID que você anotou):
+
+    tunnel: [UUID_DO_TUNNEL]
+    credentials-file: C:\Users\Ativa-New\.cloudflared\[UUID_DO_TUNNEL].json
+    
+    ingress:
+      - service: http://localhost:5000
+
+EXEMPLO (se o UUID for abc123-def456-ghi789):
+    tunnel: abc123-def456-ghi789
+    credentials-file: C:\Users\Ativa-New\.cloudflared\abc123-def456-ghi789.json
+    
+    ingress:
+      - service: http://localhost:5000
+
+PASSO 3: Testar o Túnel
+------------------------
+Execute:
+    cloudflared tunnel run bree-sistema
+
+Você verá um link tipo:
+    https://bree-sistema-xxxx.trycloudflare.com
+
+Este é seu link permanente! Anote ele!
+
+PASSO 4: Iniciar o Sistema Completo
+------------------------------------
+1. Inicie o Flask: python bree.py
+2. Em outro terminal: cloudflared tunnel run bree-sistema
+
+OU use o script automático (veja seção 5)
+
+IMPORTANTE:
+-----------
+- O link é FIXO (não muda)
+- Pode rodar como serviço Windows
+- Mais estável que o temporário
+
+================================================================================
+  4. TROUBLESHOOTING (Solução de Problemas)
+================================================================================
+
+PROBLEMA: "cloudflared: command not found"
+SOLUÇÃO: 
+- Verifique se cloudflared.exe está em C:\Windows\System32\
+- Ou use o caminho completo: C:\caminho\para\cloudflared.exe tunnel --url ...
+
+PROBLEMA: "Error: Unable to determine origin"
+SOLUÇÃO:
+- Certifique-se que o Flask está rodando na porta 5000
+- Verifique: http://localhost:5000 no navegador
+
+PROBLEMA: "Error: credentials file not found"
+SOLUÇÃO:
+- Execute novamente: cloudflared tunnel login
+- Verifique se o arquivo .json está na pasta .cloudflared
+
+PROBLEMA: Link não funciona / Timeout
+SOLUÇÃO:
+- Verifique se o Flask está rodando
+- Verifique firewall do Windows (pode bloquear conexões)
+- Tente reiniciar o túnel
+
+PROBLEMA: Porta 5000 já em uso
+SOLUÇÃO:
+- Feche outras instâncias do Flask
+- Ou mude a porta no bree.py e ajuste o túnel
+
+PROBLEMA: Túnel para de funcionar
+SOLUÇÃO:
+- Verifique se o terminal do túnel ainda está aberto
+- Reinicie o túnel: cloudflared tunnel run bree-sistema
+
+================================================================================
+  5. SCRIPTS AUTOMÁTICOS
+================================================================================
+
+SCRIPT 1: Iniciar Túnel Temporário
+-----------------------------------
+Nome: iniciar-temporario.bat
+
+Conteúdo:
+    @echo off
+    title Sistema Bree - Tunnel Temporario
+    echo ========================================
+    echo   Sistema Bree - Tunnel Temporario
+    echo ========================================
+    echo.
+    
+    REM Verificar se Flask está rodando
+    netstat -ano | findstr :5000 >nul
+    if %errorlevel% == 0 (
+        echo [OK] Flask ja esta rodando na porta 5000
+    ) else (
+        echo [1/2] Iniciando Flask...
+        start "Bree Flask" cmd /k "cd /d %~dp0 && python bree.py"
+        echo Aguardando Flask iniciar (8 segundos)...
+        timeout /t 8
+    )
+    
+    echo.
+    echo [2/2] Iniciando Cloudflare Tunnel...
+    echo.
+    echo ========================================
+    echo   LINK PUBLICO SERA EXIBIDO ABAIXO:
+    echo ========================================
+    echo.
+    cloudflared tunnel --url http://localhost:5000
+    pause
+
+
+SCRIPT 2: Iniciar Túnel Permanente
+-----------------------------------
+Nome: iniciar-permanente.bat
+
+Conteúdo:
+    @echo off
+    title Sistema Bree - Tunnel Permanente
+    echo ========================================
+    echo   Sistema Bree - Tunnel Permanente
+    echo ========================================
+    echo.
+    
+    REM Verificar se Flask está rodando
+    netstat -ano | findstr :5000 >nul
+    if %errorlevel% == 0 (
+        echo [OK] Flask ja esta rodando na porta 5000
+    ) else (
+        echo [1/2] Iniciando Flask...
+        start "Bree Flask" cmd /k "cd /d %~dp0 && python bree.py"
+        echo Aguardando Flask iniciar (8 segundos)...
+        timeout /t 8
+    )
+    
+    echo.
+    echo [2/2] Iniciando Cloudflare Tunnel Permanente...
+    echo.
+    echo ========================================
+    echo   LINK PUBLICO PERMANENTE:
+    echo ========================================
+    echo.
+    start "Cloudflare Tunnel" cmd /k "cloudflared tunnel run bree-sistema"
+    
+    echo.
+    echo ========================================
+    echo   Sistema iniciado com sucesso!
+    echo ========================================
+    echo.
+    echo O link permanente esta na janela do Cloudflare Tunnel
+    echo.
+    pause
+
+
+SCRIPT 3: Parar Tudo
+--------------------
+Nome: parar-sistema.bat
+
+Conteúdo:
+    @echo off
+    title Parar Sistema Bree
+    echo Parando Sistema Bree...
+    echo.
+    
+    REM Parar Flask
+    taskkill /F /FI "WINDOWTITLE eq Bree Flask*" 2>nul
+    taskkill /F /IM python.exe /FI "WINDOWTITLE eq Bree Flask*" 2>nul
+    
+    REM Parar Cloudflare Tunnel
+    taskkill /F /FI "WINDOWTITLE eq Cloudflare Tunnel*" 2>nul
+    taskkill /F /IM cloudflared.exe 2>nul
+    
+    echo.
+    echo Sistema parado!
+    timeout /t 2
+
+
+SCRIPT 4: Ver Status
+--------------------
+Nome: ver-status.bat
+
+Conteúdo:
+    @echo off
+    title Status do Sistema Bree
+    echo ========================================
+    echo   Status do Sistema Bree
+    echo ========================================
+    echo.
+    
+    echo Verificando Flask...
+    netstat -ano | findstr :5000 >nul
+    if %errorlevel% == 0 (
+        echo [OK] Flask esta rodando na porta 5000
+    ) else (
+        echo [X] Flask NAO esta rodando
+    )
+    
+    echo.
+    echo Verificando Cloudflare Tunnel...
+    tasklist | findstr cloudflared >nul
+    if %errorlevel% == 0 (
+        echo [OK] Cloudflare Tunnel esta rodando
+    ) else (
+        echo [X] Cloudflare Tunnel NAO esta rodando
+    )
+    
+    echo.
+    pause
+
+================================================================================
+  RESUMO RÁPIDO
+================================================================================
+
+LINK TEMPORÁRIO:
+----------------
+1. cloudflared tunnel login
+2. python bree.py (em um terminal)
+3. cloudflared tunnel --url http://localhost:5000 (em outro terminal)
+4. Copiar o link gerado
+
+TÚNEL PERMANENTE:
+-----------------
+1. cloudflared tunnel login
+2. cloudflared tunnel create bree-sistema
+3. Criar config.yml em C:\Users\Ativa-New\.cloudflared\
+4. python bree.py (em um terminal)
+5. cloudflared tunnel run bree-sistema (em outro terminal)
+6. Anotar o link permanente gerado
+
+================================================================================
+  DICAS IMPORTANTES
+================================================================================
+
+1. SEMPRE mantenha os terminais abertos enquanto precisar do acesso
+2. O link temporário MUDA a cada execução
+3. O túnel permanente mantém o MESMO link
+4. Compartilhe o link apenas com pessoas confiáveis
+5. O sistema já tem autenticação (login), então está protegido
+6. Para uso diário, use o túnel permanente (mais estável)
+
+================================================================================
+  SUPORTE
+================================================================================
+
+Se tiver problemas:
+1. Verifique a seção TROUBLESHOOTING acima
+2. Verifique os logs do Cloudflare Tunnel
+3. Verifique se o Flask está rodando corretamente
+4. Tente reiniciar tudo
+
+Documentação oficial: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/
+
+================================================================================
+  FIM DO GUIA
+================================================================================
+

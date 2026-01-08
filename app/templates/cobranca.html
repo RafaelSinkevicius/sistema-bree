@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Painel de Cobrança | Bree{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">Painel de Cobrança</h1>
+        <p style="color: var(--text-muted);">Gerencie contratos em atraso e registre ações.</p>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card">
+    <form method="get"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+
+        <!-- Busca -->
+        <div style="grid-column: span 2;">
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Buscar</label>
+            <input type="text" name="busca" class="input-premium" placeholder="Contrato, Proposta, Razão Social..."
+                value="{{ busca or '' }}" style="padding: 10px;">
+        </div>
+
+        <!-- Responsável -->
+        <div>
+            <label
+                style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Responsável</label>
+            <select name="responsavel" class="input-premium" style="padding: 10px;">
+                <option value="">Todos</option>
+                {% for nome in responsaveis %}
+                <option value="{{ nome }}" {% if responsavel==nome %}selected{% endif %}>{{ nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Status -->
+        <div>
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Status</label>
+            <select name="status" class="input-premium" style="padding: 10px;">
+                <option value="">Todos</option>
+                <option value="Em atraso" {% if status=='Em atraso' %}selected{% endif %}>Em atraso</option>
+                <option value="Mortos" {% if status=='Mortos' %}selected{% endif %}>Mortos (63+ dias)</option>
+                <option value="Pago" {% if status=='Pago' %}selected{% endif %}>Pago</option>
+                <option value="Cancelado" {% if status=='Cancelado' %}selected{% endif %}>Cancelado</option>
+            </select>
+        </div>
+
+        <!-- Ordenação -->
+        <div>
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Ordenar
+                por</label>
+            <select name="ordenar" class="input-premium" onchange="this.form.submit()" style="padding: 10px;">
+                <option value="dias_atraso_desc" {% if ordenar_por=="dias_atraso_desc" %}selected{% endif %}>Dias de
+                    atraso (↓)</option>
+                <option value="dias_atraso_asc" {% if ordenar_por=="dias_atraso_asc" %}selected{% endif %}>Dias de
+                    atraso (↑)</option>
+                <option value="parcela_desc" {% if ordenar_por=="parcela_desc" %}selected{% endif %}>Parcela atual (↓)
+                </option>
+                <option value="parcela_asc" {% if ordenar_por=="parcela_asc" %}selected{% endif %}>Parcela atual (↑)
+                </option>
+            </select>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-primary" type="submit" style="padding: 0.6rem 1rem; width: 100%;">Filtrar</button>
+            <a href="{{ url_for('limpar_filtros_cobranca') }}" class="btn btn-outline"
+                style="padding: 0.6rem 1rem; width: auto;">
+                <i data-lucide="x"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabela -->
+<div class="card" style="padding: 0; overflow: hidden;">
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: var(--primary-light); color: var(--primary-dark); text-align: left;">
+                    <th style="padding: 1rem; font-weight: 700;">Contrato</th>
+                    <th style="padding: 1rem; font-weight: 700;">Cliente</th>
+                    <th style="padding: 1rem; font-weight: 700; text-align: center;">Parc.</th>
+                    <th style="padding: 1rem; font-weight: 700; text-align: center;">Atraso</th>
+                    <th style="padding: 1rem; font-weight: 700;">Status</th>
+                    <th style="padding: 1rem; font-weight: 700;">Última Ação</th>
+                    <th style="padding: 1rem; font-weight: 700;">Resp.</th>
+                    <th style="padding: 1rem; font-weight: 700; text-align: right;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in contratos %}
+                <tr id="linha-{{ item.contrato.id }}"
+                    style="border-bottom: 1px solid #eee; transition: background 0.2s;">
+                    <td style="padding: 1rem;">
+                        <a href="{{ url_for('historico_cobranca', contrato_id=item.contrato.id) }}"
+                            style="font-weight: 600; color: var(--primary); text-decoration: none;">
+                            {{ item.contrato.contrato }}
+                        </a>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ item.contrato.proposta }}</div>
+                    </td>
+                    <td style="padding: 1rem;">
+                        <div style="font-weight: 500;">{{ item.contrato.razao_social }}</div>
+                    </td>
+                    <td style="padding: 1rem; text-align: center;">
+                        <span
+                            style="background: #eee; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.9rem;">
+                            {{ item.contrato.parcela_atual }}
+                        </span>
+                    </td>
+                    <td style="padding: 1rem; text-align: center;">
+                        <span
+                            style="color: {% if item.contrato.dias_atraso > 30 %}var(--danger){% else %}var(--warning){% endif %}; font-weight: 700;">
+                            {{ item.contrato.dias_atraso }}d
+                        </span>
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% if item.contrato.status == 'Em atraso' %}
+                        <span
+                            style="display: inline-flex; align-items: center; gap: 4px; color: var(--warning); font-weight: 600; font-size: 0.85rem;">
+                            <i data-lucide="clock" size="14"></i> Atraso
+                        </span>
+                        {% elif item.contrato.status == 'Pago' %}
+                        <span
+                            style="display: inline-flex; align-items: center; gap: 4px; color: var(--secondary); font-weight: 600; font-size: 0.85rem;">
+                            <i data-lucide="check" size="14"></i> Pago
+                        </span>
+                        {% else %}
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">{{ item.contrato.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; font-size: 0.9rem;">
+                        {% if item.ultima_acao %}
+                        <div style="font-weight: 500;">{{ item.ultima_acao.tipo }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Dia {{ item.ultima_acao.dia_atraso }}
+                        </div>
+                        {% else %}
+                        <span style="color: #ccc;">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; font-size: 0.9rem;" id="responsavel-{{ item.contrato.id }}">
+                        {{ item.responsavel or '-' }}
+                    </td>
+                    <td style="padding: 1rem; text-align: right; white-space: nowrap;">
+                        <form onsubmit="assumirContrato(event, '{{ item.contrato.id }}')" style="display:inline-block;">
+                            <button type="submit" class="btn btn-outline"
+                                style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" title="Assumir">
+                                <i data-lucide="user-plus" size="16"></i>
+                            </button>
+                        </form>
+                        <a href="{{ url_for('registrar_acao', contrato_id=item.contrato.id) }}?anchor=linha-{{ item.contrato.id }}"
+                            class="btn btn-primary"
+                            style="padding: 0.4rem 0.8rem; font-size: 0.9rem; margin-left: 0.25rem;">
+                            Registrar
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginação -->
+    {% if pagination %}
+    <div
+        style="padding: 1rem; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            {% if pagination.has_prev %}
+            <a href="?page={{ pagination.prev_num }}{% if busca %}&busca={{ busca }}{% endif %}{% if responsavel %}&responsavel={{ responsavel }}{% endif %}"
+                class="btn btn-outline" style="padding: 0.4rem 0.8rem;">&larr; Anterior</a>
+            {% endif %}
+        </div>
+        <div style="font-size: 0.9rem; color: var(--text-muted);">
+            Página <strong>{{ pagination.page }}</strong> de {{ pagination.pages }}
+        </div>
+        <div>
+            {% if pagination.has_next %}
+            <a href="?page={{ pagination.next_num }}{% if busca %}&busca={{ busca }}{% endif %}{% if responsavel %}&responsavel={{ responsavel }}{% endif %}"
+                class="btn btn-outline" style="padding: 0.4rem 0.8rem;">Próxima &rarr;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function assumirContrato(event, contratoId) {
+        event.preventDefault();
+        const url = `/assumir/${contratoId}`;
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "ok") {
+                    const responsavel = data.responsavel || "—";
+                    document.getElementById(`responsavel-${contratoId}`).innerText = responsavel;
+
+                    // Opicional: Feedback visual
+                    const btn = event.target.querySelector('button');
+                    btn.disabled = true;
+                    btn.style.opacity = 0.5;
+                } else {
+                    alert("Erro ao assumir contrato.");
+                }
+            })
+            .catch(() => alert("Erro de conexão."));
+    }
+</script>
+{% endblock %}

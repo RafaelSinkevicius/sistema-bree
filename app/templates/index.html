@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Contratos | Bree{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">Contratos</h1>
+        <p style="color: var(--text-muted);">Base completa de contratos cadastrados.</p>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card">
+    <form method="get"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+
+        <!-- Busca -->
+        <div style="grid-column: span 2;">
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Buscar</label>
+            <input type="text" name="busca" class="input-premium" placeholder="Contrato, Proposta, Razão Social..."
+                value="{{ busca or '' }}" style="padding: 10px;">
+        </div>
+
+        <!-- Responsável -->
+        <div>
+            <label
+                style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Responsável</label>
+            <select name="responsavel" class="input-premium" style="padding: 10px;">
+                <option value="">Todos</option>
+                {% for nome in responsaveis %}
+                <option value="{{ nome }}" {% if responsavel==nome %}selected{% endif %}>{{ nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Status -->
+        <div>
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Status</label>
+            <select name="status" class="input-premium" style="padding: 10px;">
+                <option value="">Todos</option>
+                <option value="Em dia" {% if status=='Em dia' %}selected{% endif %}>Em dia</option>
+                <option value="Pago" {% if status=='Pago' %}selected{% endif %}>Pago</option>
+                <option value="Em dia + Pago" {% if status=='Em dia + Pago' %}selected{% endif %}>Em dia + Pago</option>
+                <option value="Em atraso" {% if status=='Em atraso' %}selected{% endif %}>Em atraso</option>
+                <option value="Mortos" {% if status=='Mortos' %}selected{% endif %}>Mortos (63+ dias)</option>
+                <option value="Cancelado por Inadimplência" {% if status=='Cancelado por Inadimplência' %}selected{%
+                    endif %}>Cancelado Inad.</option>
+                <option value="Cancelado por Regra" {% if status=='Cancelado por Regra' %}selected{% endif %}>Cancelado
+                    Regra</option>
+                <option value="Cancelado Total" {% if status=='Cancelado Total' %}selected{% endif %}>Cancelado Total
+                </option>
+            </select>
+        </div>
+
+        <!-- Ordenação -->
+        <div>
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Ordenar
+                por</label>
+            <select name="ordenar" class="input-premium" onchange="this.form.submit()" style="padding: 10px;">
+                <option value="dias_atraso_desc" {% if ordenar_por=="dias_atraso_desc" %}selected{% endif %}>Dias de
+                    atraso (↓)</option>
+                <option value="dias_atraso_asc" {% if ordenar_por=="dias_atraso_asc" %}selected{% endif %}>Dias de
+                    atraso (↑)</option>
+                <option value="parcela_desc" {% if ordenar_por=="parcela_desc" %}selected{% endif %}>Parcela atual (↓)
+                </option>
+                <option value="parcela_asc" {% if ordenar_por=="parcela_asc" %}selected{% endif %}>Parcela atual (↑)
+                </option>
+            </select>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-primary" type="submit" style="padding: 0.6rem 1rem; width: 100%;">Filtrar</button>
+            <a href="/contratos" class="btn btn-outline" style="padding: 0.6rem 1rem; width: auto;">
+                <i data-lucide="x"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabela -->
+<div class="card" style="padding: 0; overflow: hidden;">
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 1500px; font-size: 0.85rem;">
+            <thead>
+                <tr style="background: var(--primary-light); color: var(--primary-dark); text-align: left;">
+                    <th style="padding: 0.5rem; font-weight: 700; white-space: nowrap;">ID</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Contrato</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Proposta</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Data Checagem</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Razão Social</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">CNPJ/CPF</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Celular</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Email</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Atividade Econômica</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Cidade</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Nome do Plano</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Vigência</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Vidas</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Valor</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Parc.</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Status</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Mês Canc.</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Verificado?</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Vendedor</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Atraso</th>
+                    <th style="padding: 0.5rem; font-weight: 700;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contrato, nome_vendedor in resultados %}
+                <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;">
+                    <td style="padding: 0.5rem;">{{ contrato.id }}</td>
+                    <td style="padding: 0.5rem; font-weight: 600;">
+                        <a href="{{ url_for('historico_cobranca', contrato_id=contrato.id) }}"
+                            style="text-decoration: none; color: var(--primary);">
+                            {{ contrato.contrato }}
+                        </a>
+                    </td>
+                    <td style="padding: 0.5rem; color: var(--text-muted);">{{ contrato.proposta }}</td>
+                    <td style="padding: 0.5rem;">{{ contrato.data_checagem.strftime("%d/%m/%Y") if
+                        contrato.data_checagem else '-' }}</td>
+                    <td style="padding: 0.5rem; font-weight: 500;">{{ contrato.razao_social }}</td>
+                    <td style="padding: 0.5rem;">{{ contrato.cnpj_cpf }}</td>
+                    <td style="padding: 0.5rem;">{{ contrato.celular }}</td>
+                    <td style="padding: 0.5rem; font-size: 0.8rem; word-break: break-all;">{{ contrato.email }}</td>
+                    <td style="padding: 0.5rem;">{{ contrato.atividade_economica }}</td>
+                    <td style="padding: 0.5rem;">{{ contrato.cidade }}</td>
+                    <td style="padding: 0.5rem;">{{ contrato.nome_plano }}</td>
+                    <td style="padding: 0.5rem;">{{ contrato.data_vigencia.strftime("%d/%m/%Y") if
+                        contrato.data_vigencia else '-' }}</td>
+                    <td style="padding: 0.5rem; text-align: center;">{{ contrato.vidas }}</td>
+                    <td style="padding: 0.5rem;">R$ {{ contrato.valor_parcela }}</td>
+                    <td style="padding: 0.5rem; text-align: center;">{{ contrato.parcela_atual }}</td>
+                    <td style="padding: 0.5rem;">
+                        {% if contrato.status == 'Em dia' or contrato.status == 'Pago' %}
+                        <span style="color: var(--secondary); font-weight: 600;">{{ contrato.status }}</span>
+                        {% elif contrato.status == 'Em atraso' %}
+                        <span style="color: var(--warning); font-weight: 600;">{{ contrato.status }}</span>
+                        {% elif contrato.status == 'Cliente Morto' %}
+                        <span style="color: var(--text-muted); font-weight: 700;">💀 Morto</span>
+                        {% elif 'Cancelado' in contrato.status %}
+                        <span style="color: var(--danger); font-weight: 600;">{{ contrato.status }}</span>
+                        {% else %}
+                        {{ contrato.status }}
+                        {% endif %}
+                    </td>
+                    <td style="padding: 0.5rem;">{{ contrato.mes_cancelamento.strftime("%m/%Y") if
+                        contrato.mes_cancelamento else '-' }}</td>
+                    <td style="padding: 0.5rem;">{{ 'Sim' if contrato.verificado else 'Não' }}</td>
+                    <td style="padding: 0.5rem; font-size: 0.9rem;">{{ nome_vendedor or '-' }}</td>
+                    <td style="padding: 0.5rem; text-align: center;">
+                        {% if contrato.dias_atraso and contrato.dias_atraso > 0 %}
+                        <span
+                            style="color: {% if contrato.dias_atraso > 30 %}var(--danger){% else %}var(--warning){% endif %}; font-weight: 700;">
+                            {{ contrato.dias_atraso }}d
+                        </span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td style="padding: 0.5rem;">
+                        <a href="{{ url_for('editar_contrato', contrato_id=contrato.id) }}" class="btn btn-outline"
+                            style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">
+                            ✏️
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginação -->
+    {% if pagination %}
+    <div
+        style="padding: 1rem; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            {% if pagination.has_prev %}
+            <a href="?page={{ pagination.prev_num }}{% if busca %}&busca={{ busca }}{% endif %}{% if responsavel %}&responsavel={{ responsavel }}{% endif %}"
+                class="btn btn-outline" style="padding: 0.4rem 0.8rem;">&larr; Anterior</a>
+            {% endif %}
+        </div>
+        <div style="font-size: 0.9rem; color: var(--text-muted);">
+            Página <strong>{{ pagination.page }}</strong> de {{ pagination.pages }}
+        </div>
+        <div>
+            {% if pagination.has_next %}
+            <a href="?page={{ pagination.next_num }}{% if busca %}&busca={{ busca }}{% endif %}{% if responsavel %}&responsavel={{ responsavel }}{% endif %}"
+                class="btn btn-outline" style="padding: 0.4rem 0.8rem;">Próxima &rarr;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

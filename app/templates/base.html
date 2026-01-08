@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema Bree{% endblock %}</title>
+
+    <!-- Design Kit Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div style="padding: 0 1rem; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                <div
+                    style="width: 56px; height: 56px; border-radius: 12px; background: white; display: flex; align-items: center; justify-content: center; padding: 4px; box-shadow: var(--shadow-sm); border: 1px solid #eee;">
+                    <span style="font-size: 2rem;">🐝</span>
+                </div>
+                <div>
+                    <h1 style="color: var(--primary); font-weight: 900; font-size: 1.4rem; line-height: 1;">Bree</h1>
+                    <p style="font-size: 0.7rem; color: var(--text-muted);">Automação Amil</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}"
+                    class="nav-item {{ 'active' if request.endpoint == 'dashboard' else '' }}">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('painel_cobranca') }}"
+                    class="nav-item {{ 'active' if 'cobranca' in request.endpoint else '' }}">
+                    <i data-lucide="wallet"></i>
+                    <span>Cobrança</span>
+                </a>
+                <a href="{{ url_for('listar_contratos') }}"
+                    class="nav-item {{ 'active' if request.endpoint == 'listar_contratos' else '' }}">
+                    <i data-lucide="file-text"></i>
+                    <span>Contratos</span>
+                </a>
+
+                <div
+                    style="margin-top: 1rem; padding-left: 1rem; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                    Relatórios
+                </div>
+
+                {% if session.get('usuario_tipo') == 'admin' %}
+                <a href="{{ url_for('relatorio_cobranca') }}"
+                    class="nav-item {{ 'active' if request.endpoint == 'relatorio_cobranca' else '' }}">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>Produtividade</span>
+                </a>
+                <a href="{{ url_for('relatorio_vivos') }}"
+                    class="nav-item {{ 'active' if request.endpoint == 'relatorio_vivos' else '' }}">
+                    <i data-lucide="heart-pulse"></i>
+                    <span>Vivos</span>
+                </a>
+
+                <div
+                    style="margin-top: 1rem; padding-left: 1rem; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                    Admin
+                </div>
+                <a href="{{ url_for('cadastro_usuario') }}"
+                    class="nav-item {{ 'active' if request.endpoint == 'cadastro_usuario' else '' }}">
+                    <i data-lucide="user-plus"></i>
+                    <span>Novo Usuário</span>
+                </a>
+                {% endif %}
+            </nav>
+
+            <div class="sidebar-footer">
+                <div style="padding: 0 1rem; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                    Logado como <strong>{{ session.get('usuario_nome', 'Visitante') }}</strong>
+                </div>
+                <a href="/logout" class="nav-item" style="color: var(--danger);">
+                    <i data-lucide="log-out"></i>
+                    <span>Sair</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="card"
+                    style="padding: 1rem; margin-bottom: 1rem; border-left: 5px solid {{ 'var(--danger)' if category == 'error' else 'var(--secondary)' }}; display: flex; align-items: center; gap: 1rem;">
+                    <i data-lucide="{{ 'alert-circle' if category == 'error' else 'check-circle' }}"
+                        style="color: {{ 'var(--danger)' if category == 'error' else 'var(--secondary)' }}"></i>
+                    <div>{{ message }}</div>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

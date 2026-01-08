@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Sobrepor Status | Bree{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">Sobrepor Status</h1>
+            <p style="color: var(--text-muted);">Alteração em massa de status de contratos.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+            <i data-lucide="arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <!-- Alerta de Perigo -->
+    <div class="card"
+        style="border-left: 5px solid var(--danger); background: var(--danger-light); margin-bottom: 2rem;">
+        <h3
+            style="color: var(--danger-dark); font-size: 1.1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="alert-triangle"></i> Atenção Crítica
+        </h3>
+        <p style="color: var(--danger-dark); font-size: 0.95rem;">
+            Esta função ALTERA diretamente o banco de dados. Use com cuidado para corrigir status incorretos ou
+            ressuscitar contratos cancelados.
+        </p>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">Instruções</h2>
+        <p style="color: var(--text-muted); mb-4">A planilha deve conter obrigatoriamente as colunas:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
+            <thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 0.75rem; text-align: left; border: 1px solid #eee;">Coluna</th>
+                    <th style="padding: 0.75rem; text-align: left; border: 1px solid #eee;">Descrição</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 0.75rem; border: 1px solid #eee; font-family: monospace;">CONTRATO</td>
+                    <td style="padding: 0.75rem; border: 1px solid #eee;">Número do contrato (chave de busca)</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.75rem; border: 1px solid #eee; font-family: monospace;">STATUS</td>
+                    <td style="padding: 0.75rem; border: 1px solid #eee;">Novo status a ser aplicado</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem;">Status Válidos Sugeridos:</p>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <span
+                style="background: var(--secondary-light); color: var(--secondary-dark); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">Em
+                dia</span>
+            <span
+                style="background: var(--secondary-light); color: var(--secondary-dark); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">Pago</span>
+            <span
+                style="background: var(--warning-light); color: #856404; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">Em
+                atraso</span>
+            <span
+                style="background: var(--danger-light); color: var(--danger-dark); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">Cancelado
+                por Inadimplência</span>
+            <span
+                style="background: #eee; color: #666; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">Cliente
+                Morto</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1.5rem;">Upload do Arquivo</h2>
+        <form method="post" enctype="multipart/form-data"
+            onsubmit="return confirm('ATENÇÃO: Isso alterará o status dos contratos listados. Tem certeza?');">
+            <div style="margin-bottom: 2rem;">
+                <label for="arquivo" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Selecione a
+                    planilha</label>
+                <input type="file" id="arquivo" name="arquivo" accept=".xls,.xlsx" class="input-premium"
+                    style="padding: 10px;" required>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary"
+                    style="background: var(--danger); border-color: var(--danger); flex: 1;">
+                    <i data-lucide="refresh-cw"></i> Sobrepor Status Agora
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

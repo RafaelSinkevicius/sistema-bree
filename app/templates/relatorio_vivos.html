@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Contratos Vivos | Bree{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">Contratos Vivos</h1>
+            <p style="color: var(--text-muted);">Relatório detalhado da carteira ativa.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+            <i data-lucide="arrow-left"></i> Voltar ao Painel
+        </a>
+    </div>
+
+    <!-- Resumo Geral -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h2
+            style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="bar-chart-2" style="color: var(--primary);"></i> Resumo Geral
+        </h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Total Contratos
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 700;">{{ total_contratos }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Total Vidas</div>
+                <div style="font-size: 1.5rem; font-weight: 700;">{{ total_vidas }} <span
+                        style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted);">({{
+                        media_vidas_por_contrato }} média)</span></div>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Faturamento Mensal
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--secondary);">R$ {{ total_faturamento }}
+                </div>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Ticket Médio
+                    (Contrato)</div>
+                <div style="font-size: 1.5rem; font-weight: 700;">R$ {{ ticket_medio_contrato }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Ticket Médio
+                    (Vida)</div>
+                <div style="font-size: 1.5rem; font-weight: 700;">R$ {{ ticket_medio_vida }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Valor Parcela
+                    Médio</div>
+                <div style="font-size: 1.5rem; font-weight: 700;">R$ {{ parcela_media }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Parcela Mais
+                    Antiga</div>
+                <div style="font-size: 1.5rem; font-weight: 700;">{{ parcela_maxima }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comissões -->
+    <div class="card" style="margin-bottom: 2rem; border-left: 5px solid var(--secondary);">
+        <h2
+            style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="dollar-sign" style="color: var(--secondary);"></i> Comissões Estimadas
+        </h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Agenciamento Total
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--secondary);">R$ {{ comissao_agenciamento
+                    }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Vitalício Total
+                    (4%)</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--secondary);">R$ {{ comissao_vitalicio }}
+                </div>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Comissão Média
+                    (Contrato)</div>
+                <div style="font-size: 1.5rem; font-weight: 700;">R$ {{ comissao_media_contrato }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <!-- Distribuição por Produto -->
+        <div class="card">
+            <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;">Distribuição por Produto</h2>
+            <ul style="list-style: none; padding: 0;">
+                {% for produto, vidas in vidas_por_produto.items() %}
+                <li
+                    style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0;">
+                    <span style="font-weight: 600;">{{ produto }}</span>
+                    <span>{{ vidas }} vidas <span style="color: var(--text-muted); font-size: 0.9rem;">({{
+                            percentual_por_produto[produto] }}%)</span></span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Rankings -->
+        <div class="card">
+            <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;">Ranking de Atividades</h2>
+            <ul style="list-style: none; padding: 0; margin-bottom: 2rem;">
+                {% for atividade, count in top_atividades %}
+                <li
+                    style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #f0f0f0;">
+                    <span style="color: var(--text-muted);">{{ atividade }}</span>
+                    <span style="font-weight: 700;">{{ count }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+
+            <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;">Ranking de Cidades</h2>
+            <ul style="list-style: none; padding: 0;">
+                {% for cidade, count in top_cidades %}
+                <li
+                    style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #f0f0f0;">
+                    <span style="color: var(--text-muted);">{{ cidade }}</span>
+                    <span style="font-weight: 700;">{{ count }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+
+nome: Admin
+login: vitor@ativaseguros.com.br
+senha: Ativan2025@@
+
+Nome: Bruna Muraro
+Login: bruna.muraro@ativaseguros.com.br
+senha: bruna**
