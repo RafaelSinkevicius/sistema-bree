@@ -67,13 +67,18 @@ from selenium.common.exceptions import InvalidSessionIdException
 
 from dotenv import load_dotenv
 
-load_dotenv()
+# Carrega ambiente com suporte a PyInstaller
+if getattr(sys, 'frozen', False):
+    basedir = os.path.dirname(sys.executable)
+else:
+    basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+load_dotenv(os.path.join(basedir, ".env"))
 
 fuso_brasilia = timezone(timedelta(hours=-3))
 AMIL_USER = os.getenv("AMIL_USER")
 AMIL_PASSWORD = os.getenv("AMIL_PASSWORD")
 # DIAS_VERIFICACAO_MORTOS = 15
-DIAS_ATRASO_PARA_MORTO = 63
 DIAS_D3 = 3
 INTERVALO_EXECUCAO = 300  # 5 minutos
 
@@ -631,9 +636,10 @@ class AutomacaoBree:
         else:
             contrato.mes_cancelamento = None
             
-        if contrato.status == "Em atraso" and contrato.dias_atraso >= DIAS_ATRASO_PARA_MORTO:
-            log_debug(f"Contrato {contrato.contrato} declarado MORTO (Atraso {contrato.dias_atraso} >= {DIAS_ATRASO_PARA_MORTO})")
-            contrato.status = "Cliente Morto"
+        # NOVA REGRA: 61+ DIAS = CANCELADO POR INADIMPLÊNCIA (AUTOMATICAMENTE)
+        if contrato.status == "Em atraso" and contrato.dias_atraso > 60:
+            log_debug(f"Contrato {contrato.contrato} CANCELADO POR INADIMPLÊNCIA (Atraso {contrato.dias_atraso}d > 60d)")
+            contrato.status = "Cancelado por Inadimplência"
             
         db.session.commit()
         
@@ -661,8 +667,6 @@ class AutomacaoBree:
             db.session.remove()
             hoje = datetime.now(pytz.timezone("America/Sao_Paulo")).date()
             
-            # self._log_previsao(hoje) # Substituído por log detalhado abaixo
-            
             logging.info("🔎 Levantando contratos para verificação...")
             
             # 1. EM ATRASO
@@ -677,17 +681,16 @@ class AutomacaoBree:
                 if pode and (not c.data_checagem or c.data_checagem < d3):
                     candidatos_ativos.append(c)
             
-            # 3. MORTOS (15d)
-            raw_mortos = Contrato.query.filter(Contrato.status == "Cliente Morto").all()
-            candidatos_mortos = [c for c in raw_mortos if self._deve_checar_espacado(c, hoje)]
+            # 3. MORTOS (REMOVIDO - CLIENTES MORTOS NÃO EXISTEM MAIS)
+            # Todo contrato morto anterior deve ter sido migrado para "Cancelado por Inadimplência"
+            # Cancelados não são verificados automaticamente.
             
-            total_previsao = len(candidatos_atraso) + len(candidatos_ativos) + len(candidatos_mortos)
+            total_previsao = len(candidatos_atraso) + len(candidatos_ativos)
             
             logging.info("="*50)
             logging.info(f"📊 PREVISÃO DE EXECUÇÃO: {total_previsao} contratos na fila.")
             logging.info(f"   ➤ Atrasados: {len(candidatos_atraso)}")
             logging.info(f"   ➤ Ativos (D+3): {len(candidatos_ativos)}")
-            logging.info(f"   ➤ Mortos (15d): {len(candidatos_mortos)}")
             logging.info("="*50)
             
             if total_previsao == 0:
@@ -705,31 +708,24 @@ class AutomacaoBree:
                 self.update_heartbeat()
                 if self._verificar_contrato_safe(contrato, hoje, "ATIVO"): c += 1
             
-            for contrato in candidatos_mortos:
-                self.update_heartbeat()
-                if self._verificar_contrato_safe(contrato, hoje, "MORTO"): c += 1
-
             logging.info(f"Ciclo concluído. {c} contratos verificados com sucesso.")
 
     def _deve_checar_espacado(self, contrato, hoje):
-        """Helper para checar a cada 15 dias."""
-        if not contrato.data_checagem: return True
-        return (hoje - contrato.data_checagem).days >= 15
+        """DEPRECATED: Função de checagem de mortos."""
+        return False
 
     def _log_previsao(self, hoje):
         # Log simplificado para cleaner code
         logging.info("Iniciando novo ciclo de verificação...")
 
     def _dormir(self, hoje):
-        # Dorme até o dia seguinte
-        agora = datetime.now()
-        amanha = (agora + timedelta(days=1)).replace(hour=0, minute=5, second=0)
-        secs = (amanha - agora).total_seconds()
-        logging.info(f"Dormindo {secs}s até amanha...")
-        while secs > 0:
-            time.sleep(min(secs, 10))
-            secs -= 10
-            self.update_heartbeat()
+        """
+        Antiga função que dormia até 00:05.
+        Agora apenas finaliza o ciclo para que o loop principal aguarde o intervalo padrão.
+        """
+        logging.info("Ciclo de verificação diária concluído. Nenhuma pendência encontrada.")
+        # Não força mais a espera até 00:05, apenas retorna para o loop de 5min
+        pass
 
     def run(self):
         self.watchdog_thread = threading.Thread(target=self.watchdog_monitor, daemon=True)
@@ -758,20 +754,21 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Automacao Bree')
-    parser.add_argument('--once', action='store_true', help='Executa apenas um ciclo e encerra (modo Agendador de Tarefas)')
+    parser.add_argument('--loop', action='store_true', help='Executa em loop infinito com intervalos (modo serviço)')
     args = parser.parse_args()
 
     try:
         bot = AutomacaoBree()
-        if args.once:
-            logging.info("Modo Único (--once) ativado. Executando um ciclo e encerrando.")
+        if args.loop:
+            logging.info("Modo Loop (--loop) ativado. Execução contínua.")
+            bot.run()
+        else:
+            logging.info("Modo Padrão (Single Run). Executando um ciclo e encerrando.")
             try:
                 bot.login_e_navegar_sisamil()
                 bot.atualizar_banco()
             finally:
                 if bot.driver: bot.driver.quit()
-        else:
-            bot.run()
             
     except Exception as e:
         # Se explodir no init, tenta logar e sai

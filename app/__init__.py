@@ -178,9 +178,18 @@ app = Flask(__name__)
 import sys
 import os
 
+import os
+import sys
+from dotenv import load_dotenv
+
 if getattr(sys, 'frozen', False):
     template_folder = os.path.join(sys._MEIPASS, 'app', 'templates')
     static_folder = os.path.join(sys._MEIPASS, 'app', 'static')
+    
+    # LOAD ENV ROBUSTO (Correção Definitiva)
+    basedir = os.path.dirname(sys.executable)
+    load_dotenv(os.path.join(basedir, ".env"))
+    
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 else:
     app = Flask(__name__)
@@ -219,6 +228,7 @@ app.config['JSON_AS_ASCII'] = False
 db = SQLAlchemy(app)
 
 # Modelo Contrato
+    # Modelo Contrato
 class Contrato(db.Model):
     __tablename__ = 'contratos'
 
@@ -243,9 +253,8 @@ class Contrato(db.Model):
     vendedor_id = db.Column(db.Integer, db.ForeignKey('vendedores.id'))
     dias_atraso = db.Column(db.Integer, nullable=True)
     
-    # NOTA: "Cliente Morto" é um STATUS (não um campo booleano)
-    # Contratos mortos: 63+ dias de atraso SEM multa
-    # São rechecados a cada 15 dias pela automação
+    # NOTA: Cliente Morto NÃO EXISTE MAIS.
+    # Contratos com 61+ dias de atraso são Cancelados por Inadimplência automaticamente.
     
     acoes = db.relationship('AcaoCobranca', backref='contrato', lazy=True)
     envio_sms = db.Column(db.Boolean, default=True)
@@ -301,14 +310,13 @@ def dashboard():
     atrasados = Contrato.query.filter(Contrato.status == "Em atraso").count()
     cancelados_inad = Contrato.query.filter(Contrato.status == "Cancelado por Inadimplência").count()
     cancelados_regra = Contrato.query.filter(Contrato.status == "Cancelado por Regra").count()
-    mortos = Contrato.query.filter(Contrato.status == "Cliente Morto").count()
+    # Mortos removido
     
     status_counts = {
         "Ativos": ativos,
         "Atrasados": atrasados,
         "Cancelados_Inad": cancelados_inad,
-        "Cancelados_Regra": cancelados_regra,
-        "Mortos": mortos
+        "Cancelados_Regra": cancelados_regra
     }
     
     print(f"DEBUG DASHBOARD: {status_counts}")
@@ -319,66 +327,7 @@ def dashboard():
         total=total
     )
 
-
-@app.route("/marcar_contratos_mortos", methods=["POST"])
-@login_required
-@admin_required
-def marcar_contratos_mortos():
-    """
-    HIGIENIZAÇÃO DE CONTRATOS MORTOS
-    
-    Função de higienização que:
-    1. Busca todos os contratos com status "Em atraso"
-    2. Que têm 63+ dias de atraso
-    3. Que NÃO têm status de cancelado (sem multa)
-    4. ALTERA o STATUS para "Cliente Morto"
-    
-    Depois disso, a automação irá rechecar esses contratos periodicamente (a cada 15 dias).
-    """
-    from datetime import date, timedelta
-
-    hoje = date.today()
-
-    # Busca contratos elegíveis para virar "Cliente Morto"
-    # Critério: status "Em atraso" + 63+ dias de atraso + não cancelado (sem multa)
-    contratos_elegiveis = Contrato.query.filter(
-        Contrato.status == "Em atraso",
-        Contrato.dias_atraso.isnot(None),
-        Contrato.dias_atraso >= 63
-    ).all()
-
-    if not contratos_elegiveis:
-        flash("✅ Nenhum contrato elegível para status 'Cliente Morto'. Todos os contratos em atraso com 63+ dias já foram processados.", "info")
-        return redirect(url_for("dashboard"))
-
-    # Lista para log
-    contratos_alterados = []
-    
-    # Altera o STATUS de cada contrato para "Cliente Morto"
-    for contrato in contratos_elegiveis:
-        contrato.status = "Cliente Morto"
-        contrato.data_checagem = hoje
-        contratos_alterados.append(contrato.contrato)
-
-    # Salva as alterações no banco de dados
-    try:
-        db.session.commit()
-        flash(f"🧹 HIGIENIZAÇÃO CONCLUÍDA!", "success")
-        flash(f"✅ {len(contratos_alterados)} contratos tiveram o STATUS alterado para 'Cliente Morto'.", "success")
-        flash(f"📅 A automação irá rechecar esses contratos a cada 15 dias.", "info")
-        
-        # Log dos primeiros contratos alterados (para referência)
-        if len(contratos_alterados) <= 10:
-            flash(f"📋 Contratos: {', '.join(contratos_alterados)}", "info")
-        else:
-            flash(f"📋 Primeiros 10: {', '.join(contratos_alterados[:10])}... e mais {len(contratos_alterados)-10}", "info")
-            
-    except Exception as e:
-        db.session.rollback()
-        flash(f"❌ ERRO ao salvar no banco: {str(e)}", "error")
-        logging.error(f"Erro ao marcar contratos mortos: {e}")
-    
-    return redirect(url_for("dashboard"))
+# ROTAS DE HIGIENIZAÇÃO REMOVIDAS (Anti-pattern "Mortos")
 
 # Rota para listar detalhadamente os contratos cadastrados
 @app.route('/contratos')
@@ -424,8 +373,6 @@ def listar_contratos():
         query = query.filter(Contrato.status.in_(["Em dia", "Pago"]))
     elif status == "Cancelado Total":
         query = query.filter(Contrato.status.in_(["Cancelado por Inadimplência", "Cancelado por Regra"]))
-    elif status == "Mortos":
-        query = query.filter(Contrato.status == "Cliente Morto")
     elif status:
         query = query.filter(Contrato.status == status)
 
@@ -515,11 +462,8 @@ def painel_cobranca():
     critico = filtros.get("critico", "")
     sms = filtros.get("sms", "")
 
-    # Base query: contratos em atraso (padrão) ou mortos (se filtrado)
-    if status == "Mortos":
-        query = Contrato.query.filter(Contrato.status == "Cliente Morto")
-    else:
-        query = Contrato.query.filter(Contrato.status == "Em atraso")
+    # Base query: contratos em atraso (padrão) - Mortos removido
+    query = Contrato.query.filter(Contrato.status == "Em atraso")
 
     # OTIMIZAÇÃO: Busca mais eficiente - usar LIKE com prefixo quando possível
     if busca:
@@ -1317,18 +1261,44 @@ def limpar_filtros_cobranca():
 @login_required
 @admin_required
 def exportar_base_completa():
-    """Exporta toda a base de dados em um arquivo Excel com múltiplas abas"""
+    """Exporta a base de dados filtrada em um arquivo Excel formatado"""
     from datetime import datetime
+    from openpyxl.utils import get_column_letter
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
     
     try:
         hoje = datetime.today().date()
         
-        # Criar um buffer em memória para o Excel
+        # Recupera filtro de status da URL
+        filtro_status = request.args.get("status", "TODOS")
+        
+        # Query de contratos com filtro
+        query = Contrato.query.options(joinedload(Contrato.vendedor))
+        
+        if filtro_status and filtro_status != "TODOS":
+            lista_status = [s.strip() for s in filtro_status.split(',')]
+            query = query.filter(Contrato.status.in_(lista_status))
+        
+        # Ordenar por status (ordem lógica)
+        ordem_status = ["Em dia", "Pago", "Em atraso", "Cancelado por Inadimplência", "Cancelado por Regra"]
+        contratos = query.all()
+        
+        # Ordenar manualmente
+        def sort_key(c):
+            try:
+                return ordem_status.index(c.status) if c.status in ordem_status else 999
+            except:
+                return 999
+        contratos.sort(key=sort_key)
+        
+        # IDs dos contratos filtrados (para filtrar outras abas)
+        ids_contratos = {c.id for c in contratos}
+        
+        # Criar buffer
         output = io.BytesIO()
         
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            # Aba 1: Contratos (com eager loading do vendedor)
-            contratos = Contrato.query.options(joinedload(Contrato.vendedor)).all()
+            # ==================== ABA CONTRATOS ====================
             dados_contratos = []
             for c in contratos:
                 try:
@@ -1357,73 +1327,84 @@ def exportar_base_completa():
                         "Cliente Crítico": "Sim" if c.cliente_critico else "Não"
                     })
                 except Exception as e:
-                    logging.error(f"Erro ao processar contrato ID {c.id}: {e}")
+                    logging.error(f"Erro contrato {c.id}: {e}")
                     continue
             
             if dados_contratos:
-                df_contratos = pd.DataFrame(dados_contratos)
-                df_contratos.to_excel(writer, index=False, sheet_name="Contratos")
+                df = pd.DataFrame(dados_contratos)
+                df.to_excel(writer, index=False, sheet_name="Contratos")
+                
+                # Formatação
+                ws = writer.sheets["Contratos"]
+                header_fill = PatternFill(start_color="0D47A1", end_color="0D47A1", fill_type="solid")
+                header_font = Font(color="FFFFFF", bold=True)
+                thin_border = Border(
+                    left=Side(style='thin'), right=Side(style='thin'),
+                    top=Side(style='thin'), bottom=Side(style='thin')
+                )
+                
+                # Larguras de coluna (ordem: ID, Proposta, Contrato, Data Checagem, Razão Social, CNPJ/CPF, Celular, E-mail, Atividade, Cidade, Plano, Vigência, Vidas, Valor, Parcela, Status, Mês Cancel, Verificado, Dias Atraso, Vendedor, SMS, Crítico)
+                col_widths = [8, 12, 12, 14, 45, 18, 15, 30, 25, 18, 25, 14, 8, 14, 10, 28, 14, 12, 12, 25, 10, 12]
+                for i, width in enumerate(col_widths, 1):
+                    if i <= len(col_widths):
+                        ws.column_dimensions[get_column_letter(i)].width = width
+                
+                # Formatar header
+                for cell in ws[1]:
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = Alignment(horizontal="center")
+                    cell.border = thin_border
+                
+                # Formatar dados
+                for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+                    for cell in row:
+                        cell.border = thin_border
+                        cell.alignment = Alignment(horizontal="left")
             
-            # Aba 2: Vendedores
-            vendedores = Vendedor.query.all()
-            dados_vendedores = []
-            for v in vendedores:
-                dados_vendedores.append({
-                    "ID": v.id,
-                    "Nome": v.nome or "",
-                    "CPF/CNPJ": v.cpf_cnpj or "",
-                    "Celular": v.celular or "",
-                    "E-mail": v.email or ""
-                })
-            if dados_vendedores:
-                df_vendedores = pd.DataFrame(dados_vendedores)
-                df_vendedores.to_excel(writer, index=False, sheet_name="Vendedores")
+            # ==================== ABA AÇÕES (APENAS DOS CONTRATOS FILTRADOS) ====================
+            if ids_contratos:
+                acoes = AcaoCobranca.query.filter(AcaoCobranca.contrato_id.in_(ids_contratos)).all()
+                if acoes:
+                    dados_acoes = []
+                    for a in acoes:
+                        dados_acoes.append({
+                            "Contrato ID": a.contrato_id,
+                            "Tipo": a.tipo or "",
+                            "Mensagem": (a.mensagem or "")[:100],  # Limitar tamanho
+                            "Dia Atraso": a.dia_atraso or 0,
+                            "Parcela": a.parcela or 0,
+                            "Enviada": a.enviada_em.strftime("%d/%m/%Y") if a.enviada_em else "",
+                            "Status": a.status_envio or "",
+                        })
+                    
+                    df_acoes = pd.DataFrame(dados_acoes)
+                    df_acoes.to_excel(writer, index=False, sheet_name="Ações")
+                    
+                    # Formatação
+                    ws = writer.sheets["Ações"]
+                    for i, width in enumerate([12, 15, 50, 10, 10, 12, 15], 1):
+                        ws.column_dimensions[get_column_letter(i)].width = width
+                    for cell in ws[1]:
+                        cell.fill = header_fill
+                        cell.font = header_font
             
-            # Aba 3: Ações de Cobrança (com eager loading do contrato)
-            acoes = AcaoCobranca.query.options(joinedload(AcaoCobranca.contrato)).all()
-            dados_acoes = []
-            for a in acoes:
-                try:
-                    contrato_num = ""
-                    if a.contrato:
-                        contrato_num = a.contrato.contrato or ""
-                    dados_acoes.append({
-                        "ID": a.id,
-                        "Contrato ID": a.contrato_id,
-                        "Contrato": contrato_num,
-                        "Tipo": a.tipo or "",
-                        "Mensagem": a.mensagem or "",
-                        "Dia de Atraso": a.dia_atraso if a.dia_atraso is not None else "",
-                        "Parcela": a.parcela if a.parcela is not None else "",
-                        "Enviada em": a.enviada_em.strftime("%d/%m/%Y %H:%M") if a.enviada_em else "",
-                        "Status Envio": a.status_envio or "",
-                        "Usuário": a.usuario or ""
-                    })
-                except Exception as e:
-                    logging.error(f"Erro ao processar ação ID {a.id}: {e}")
-                    continue
-            
-            if dados_acoes:
-                df_acoes = pd.DataFrame(dados_acoes)
-                df_acoes.to_excel(writer, index=False, sheet_name="Ações de Cobrança")
-            
-            # Aba 4: Responsáveis de Cobrança
-            responsaveis = ResponsavelCobranca.query.all()
-            # OTIMIZAÇÃO: Usar contratos já carregados em vez de nova query
-            contratos_dict = {c.id: c.contrato for c in contratos}
-            
-            dados_responsaveis = []
-            for r in responsaveis:
-                contrato_num = contratos_dict.get(r.contrato_id, "")
-                dados_responsaveis.append({
-                    "ID": r.id,
-                    "Contrato ID": r.contrato_id,
-                    "Contrato": contrato_num,
-                    "Usuário": r.usuario or ""
-                })
-            if dados_responsaveis:
-                df_responsaveis = pd.DataFrame(dados_responsaveis)
-                df_responsaveis.to_excel(writer, index=False, sheet_name="Responsáveis")
+            # ==================== ABA RESPONSÁVEIS (APENAS DOS CONTRATOS FILTRADOS) ====================
+            if ids_contratos:
+                responsaveis = ResponsavelCobranca.query.filter(
+                    ResponsavelCobranca.contrato_id.in_(ids_contratos)
+                ).all()
+                if responsaveis:
+                    dados_resp = [{"Contrato ID": r.contrato_id, "Usuário": r.usuario or ""} for r in responsaveis]
+                    df_resp = pd.DataFrame(dados_resp)
+                    df_resp.to_excel(writer, index=False, sheet_name="Responsáveis")
+                    
+                    ws = writer.sheets["Responsáveis"]
+                    ws.column_dimensions["A"].width = 12
+                    ws.column_dimensions["B"].width = 25
+                    for cell in ws[1]:
+                        cell.fill = header_fill
+                        cell.font = header_font
             
             # Aba 5: Usuários (sem senhas)
             usuarios = Usuario.query.all()

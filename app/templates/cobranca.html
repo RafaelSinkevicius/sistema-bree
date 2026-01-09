@@ -40,9 +40,49 @@
             <select name="status" class="input-premium" style="padding: 10px;">
                 <option value="">Todos</option>
                 <option value="Em atraso" {% if status=='Em atraso' %}selected{% endif %}>Em atraso</option>
-                <option value="Mortos" {% if status=='Mortos' %}selected{% endif %}>Mortos (63+ dias)</option>
                 <option value="Pago" {% if status=='Pago' %}selected{% endif %}>Pago</option>
                 <option value="Cancelado" {% if status=='Cancelado' %}selected{% endif %}>Cancelado</option>
+            </select>
+        </div>
+
+        <!-- Parcela -->
+        <div>
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Parcela</label>
+            <input type="number" name="parcela" class="input-premium" value="{{ parcela or '' }}" style="padding: 10px;"
+                placeholder="Nº">
+        </div>
+
+        <!-- Dias de Atraso (Range) -->
+        <div>
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Dias de atraso
+                entre</label>
+            <div style="display: flex; gap: 0.5rem;">
+                <input type="number" name="atraso_min" class="input-premium" value="{{ atraso_min or '' }}"
+                    style="padding: 10px; width: 50%;" placeholder="Min">
+                <input type="number" name="atraso_max" class="input-premium" value="{{ atraso_max or '' }}"
+                    style="padding: 10px; width: 50%;" placeholder="Max">
+            </div>
+        </div>
+
+        <!-- Cliente Crítico -->
+        <div>
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">Cliente
+                Crítico</label>
+            <select name="critico" class="input-premium" style="padding: 10px;">
+                <option value="">Todos</option>
+                <option value="1" {% if critico=='1' %}selected{% endif %}>Sim</option>
+                <option value="0" {% if critico=='0' %}selected{% endif %}>Não</option>
+            </select>
+        </div>
+
+        <!-- SMS Ativo -->
+        <div>
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; display: block;">SMS
+                Ativo</label>
+            <select name="sms" class="input-premium" style="padding: 10px;">
+                <option value="">Todos</option>
+                <option value="1" {% if sms=='1' %}selected{% endif %}>Sim</option>
+                <option value="0" {% if sms=='0' %}selected{% endif %}>Não</option>
             </select>
         </div>
 
@@ -66,8 +106,8 @@
         <div style="display: flex; gap: 0.5rem;">
             <button class="btn btn-primary" type="submit" style="padding: 0.6rem 1rem; width: 100%;">Filtrar</button>
             <a href="{{ url_for('limpar_filtros_cobranca') }}" class="btn btn-outline"
-                style="padding: 0.6rem 1rem; width: auto;">
-                <i data-lucide="x"></i>
+                style="padding: 0.6rem 1rem; width: auto; white-space: nowrap;">
+                <i data-lucide="x"></i> Limpar Filtros
             </a>
         </div>
     </form>

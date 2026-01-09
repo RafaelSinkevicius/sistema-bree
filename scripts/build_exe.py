@@ -32,5 +32,16 @@ PyInstaller.__main__.run([
     '--hidden-import=webdriver_manager',
 ])
 
+# 3. Build da Migração (DB Fix)
+print("🔨 Compilando Migração (DB Fix)...")
+PyInstaller.__main__.run([
+    'scripts/master_migration.py',
+    '--name=MigracaoBree_V3',
+    '--onefile',
+    '--hidden-import=pg8000',
+    '--hidden-import=sqlalchemy.sql.default_comparator',
+    '--hidden-import=flask_sqlalchemy',
+])
+
 print("✅ Builds concluídos! Executáveis na pasta 'dist/'.")
 print("⚠️ IMPORTANTE: Copie a pasta 'dist' para o PC de produção e certifique-se de que o arquivo .env esteja na mesma pasta dos executáveis.")
